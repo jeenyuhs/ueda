@@ -6,3 +6,4 @@ ueda
 *.so
 *.dylib
 *.dll
+main.v
