@@ -78,12 +78,26 @@ fn status_msg(code int) string {
 	return msg
 }
 
+pub fn (mut r Request) resp_json(s string) []byte {
+	r.headers["Content-Type"] = "application/json"
+	return s.bytes()
+}
+
+pub fn (mut r Request) resp_raw(s []byte) []byte {
+	r.headers["Content-Type"] = "text/plain"
+	return s
+}
+
+pub fn (mut r Request) resp_html(s string) []byte {
+	r.headers["Content-Type"] = "text/html; charset=UTF-8"
+	return s.bytes()
+}
+
 fn (mut r Request) send(code int, cnt []byte) []byte {
 	mut buf := []byte{}
 
 	buf << "$r.http_ver $code ${status_msg(code)}\r\n".bytes()
 
-	r.headers["Content-Type"] = "text/html; charset=UTF-8"
 	r.headers["Content-Length"] = "$cnt.len"
 
 	for key, value in r.headers {
