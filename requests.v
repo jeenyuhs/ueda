@@ -5,7 +5,9 @@ mut:
 	raw		 	[]string
 
 pub mut:
-	method	 	string
+	body		[]byte
+
+	method	 	Method
 	path	 	string
 	http_ver 	string
 
@@ -14,24 +16,44 @@ pub mut:
 	headers	 	map[string]string
 }
 
-fn parse_request(buf string) Request {
+fn match_method_enum(method string) ?Method {
+	match method {
+		"GET" { return .get }
+		"POST" { return .post }
+		else { return error("not a valid method") }
+	}
+}
+
+fn parse_request(buf string) ?Request {
 	mut req := buf.split_nth("\r\n", 0)
 	req_data := req[0].split_nth(" ", 0)
+
+	method := match_method_enum(req_data[0]) or {
+		return err
+	}
 	
 	mut request := Request{
 		raw: req
 
-		method: req_data[0]
+		method: method
 		path: req_data[1]
 		http_ver: req_data[2]
+
+		body: req.last().bytes()
 	}
 
 	return request
 }
 
 fn (mut r Request) parse_headers() {
-	for h in r.raw[1..r.raw.len-2] {
+	for h in r.raw[1..] {
+		if h.len == 0 {
+			break
+		}
+
 		header := h.split_nth(": ", 0)
+
+
 		r.headers[header[0]] = header[1]
 	}
 }

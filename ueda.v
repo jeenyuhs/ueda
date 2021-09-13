@@ -26,12 +26,14 @@ pub fn (mut u Ueda) add_endpoint(e Endpoint) {
 }
 
 fn (u &Ueda) find_endpoint(r &Request) ?Endpoint {
-	if r.path in u.endpoints {
-		if r.method != form_methods[u.endpoints[r.path].method] {
+	path := r.path.all_before("?")
+
+	if path in u.endpoints {
+		if r.method !in u.endpoints[path].methods {
 			return error("Method not allowed.")
 		}
 
- 		return u.endpoints[r.path]
+ 		return u.endpoints[path]
 	}
 
 	return error("Not found.")
@@ -64,7 +66,11 @@ pub fn (u &Ueda) run() {
 
 		data := buf.bytestr()
 
-		mut req := parse_request(data)
+		mut req := parse_request(data) or {
+			log.warn("Parsing request error: $err")
+			conn.close() or {}
+			continue
+		}
 
 		endpoint := u.find_endpoint(req) or {
 			conn.write(four_o_four()) or {}
@@ -73,7 +79,9 @@ pub fn (u &Ueda) run() {
 			continue
 		}
 
-		match endpoint.method {
+		req.parse_headers()
+
+		match req.method {
 			.get {
 				req.parse_get_args()
 			}

@@ -7,7 +7,7 @@ pub enum Method {
 
 pub struct Endpoint {
 pub mut:
-	method	Method
+	methods	[]Method
 	path	string
 	func	fn (mut Request) ([]byte, int)
 }
